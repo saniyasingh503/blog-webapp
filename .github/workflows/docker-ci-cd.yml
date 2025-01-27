@@ -16,6 +16,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          
+      - name: Install Dependencies
+        run: mvn clean install -DskipTests
+
+      - name: Run tests
+        run: mvn test
+
       # Log in to Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
@@ -29,22 +41,3 @@ jobs:
           docker compose build
           docker compose push
 
-  deploy:
-    needs: build
-    runs-on: [self-hosted]
-    steps:
-      # Step 1: Checkout code
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      # Step 2: Pull the latest image from Docker Hub
-      - name: Pull Image from Docker Hub
-        run: docker-compose pull
-
-      # Step 3: Stop and remove any old containers
-      - name: Stop old containers
-        run: docker-compose down
-
-      # Step 4: Start the new containers with Docker Compose
-      - name: Run docker containers with Docker Compose
-        run: docker-compose up -d
