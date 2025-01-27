@@ -39,12 +39,12 @@ jobs:
 
       # Step 2: Pull the latest image from Docker Hub
       - name: Pull Image from Docker Hub
-        run: docker compose pull
+        run: docker-compose pull
 
       # Step 3: Stop and remove any old containers
       - name: Stop old containers
-        run: docker compose down
+        run: docker-compose down
 
       # Step 4: Start the new containers with Docker Compose
       - name: Run docker containers with Docker Compose
-        run: docker compose up -d
+        run: docker-compose up -d
