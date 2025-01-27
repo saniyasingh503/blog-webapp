@@ -23,10 +23,14 @@ jobs:
           java-version: '17'
           
       - name: Install Dependencies
-        run: mvn clean install -DskipTests
+        run: |
+          cd ./blog-app
+          mvn clean install -DskipTests
 
       - name: Run tests
-        run: mvn test
+        run: |
+          cd ./blog-app
+          mvn test
 
       # Log in to Docker Hub
       - name: Log in to Docker Hub
