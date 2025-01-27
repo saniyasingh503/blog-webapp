@@ -37,4 +37,13 @@ public class Post implements Serializable{
         this.publishedAt = new Date();
     }
 
+	public Post(String id, String title, String subtitle, String content, String author) {
+		super();
+		this.id = id;
+		this.title = title;
+		this.subtitle = subtitle;
+		this.content = content;
+		this.author = author;
+	}
+
 }
