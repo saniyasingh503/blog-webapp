@@ -1,0 +1,131 @@
+version: '3.8'
+
+services:
+  elasticsearch: 
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.4
+    container_name: elasticsearch 
+    environment:
+      - XPACK.MONITORING.ENABLED=FALSE
+      - xpack.security.enabled=false
+      - node.name=elasticsearch
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - 'ES_JAVA_OPTS=-Xms512m -Xmx512m'
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+    networks:
+      - backend-tier
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.10.4
+    container_name: logstash 
+    volumes:
+      - ./blog-app/logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
+      - ./blog-app/logstash/pipeline/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+      - /logs/sample.log:/usr/share/logstash/data/sample.log
+      - ./logs:/usr/share/logstash/logs
+    ports:
+      - 5000:5000
+    environment:  
+      - 'LS_JAVA_OPTS=-Xmx256m -Xms256m' 
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9600/_node/pipelines"]
+      interval: 30s
+      retries: 5
+      timeout: 10s
+    networks:
+      - backend-tier
+    depends_on:
+      - elasticsearch 
+
+  kibana: 
+    image: docker.elastic.co/kibana/kibana:8.10.4
+    container_name: kibana
+    ports:
+      - 5601:5601
+    environment: 
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - 'NODE_OPTIONS=--max-old-space-size=2048'
+    networks:
+      - backend-tier
+    depends_on:
+      - elasticsearch
+
+  # Web service
+  webapp:
+    build: ./blog-app
+    image: saniyasingh503/blog-app-webapp
+    container_name: webapp-container
+    ports:
+      - "8083:8083"
+    environment:
+      - JAVA_ENV=${JAVA_ENV}
+      - MYSQL_HOST=${MYSQL_HOST}
+      - MYSQL_PORT=${MYSQL_PORT}
+      - MYSQL_DB=${MYSQL_DB}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - PORT=${PORT}
+      - LOGSTASH.HOST=logstash
+      - LOGSTASH.PORT=5000
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      logstash:
+        condition: service_healthy
+    networks:
+      - backend-tier  
+
+  # DB service
+  mysql:
+    build: ./db
+    image: saniyasingh503/blog-app-mysql-db  
+    container_name: mysql-container
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DB}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 30s  
+      retries: 3      
+      timeout: 10s    
+      start_period: 5s
+    networks:
+      - backend-tier 
+
+  # Cache service
+  redis:
+    build: ./cache
+    image: saniyasingh503/blog-app-cache 
+    container_name: redis-container
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"] 
+      interval: 30s  
+      retries: 3     
+      timeout: 10s    
+      start_period: 5s
+    networks:
+      - backend-tier 
+
+networks:
+  backend-tier:
+    driver: bridge 
+
+volumes:
+  es-data:
+    driver: local
+  mysql_data:
+    driver: local
+
