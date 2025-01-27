@@ -1,0 +1,50 @@
+name: CI-CD Pipeline
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Log in to Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ vars.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+
+      # Build and push the Docker image using the compose file
+      - name: Build and push Docker image
+        run: |
+          docker-compose build
+          docker-compose push
+
+  deploy:
+    needs: build
+    runs-on: [self-hosted]
+    steps:
+      # Step 1: Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Pull the latest image from Docker Hub
+      - name: Pull Image from Docker Hub
+        run: docker-compose pull
+
+      # Step 3: Stop and remove any old containers
+      - name: Stop old containers
+        run: docker-compose down
+
+      # Step 4: Start the new containers with Docker Compose
+      - name: Run docker containers with Docker Compose
+        run: docker-compose up -d
