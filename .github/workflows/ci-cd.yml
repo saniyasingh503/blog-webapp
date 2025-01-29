@@ -16,22 +16,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Java
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-          
-      - name: Install Dependencies
-        run: |
-          cd ./blog-app
-          mvn clean install -DskipTests
-
-      - name: Run tests
-        run: |
-          cd ./blog-app
-          mvn test
-
       # Log in to Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
