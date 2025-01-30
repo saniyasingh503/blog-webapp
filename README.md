@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project is a **blog application** that is fully containerized and integrates **MySQL, Redis, and ELK (Elasticsearch, Logstash, Kibana)** for logging and monitoring. The entire application stack is orchestrated using **Docker Compose**, ensuring smooth communication between services.
+This project is a **blog application** that is fully containerized and integrates **MySQL, Redis, and ELK (Elasticsearch, Logstash, Kibana)** for logging and monitoring. The entire application stack is orchestrated using **Docker Compose**, ensuring smooth communication betweenservices.
 
 ---
 
